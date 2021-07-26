@@ -35,7 +35,7 @@ class Lane extends Component{
       <div className="lane">
         <div className="lane-items">
           {this.state.itemsWithMargin && this.state.itemsWithMargin.map((item, i) => (
-            <Item key={i} item={item}/>
+            <Item key={i} item={item} duration={(item.endIndex - item.startIndex + 1)*10}/>
           ))}
         </div>
       </div>
