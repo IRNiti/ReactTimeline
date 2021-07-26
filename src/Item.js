@@ -57,7 +57,7 @@ class Item extends Component {
     }
     this.setState({
       allowDrag: true,
-      relativePosition: event.pageX + this.state.startMargin
+      relativePosition: event.pageX - this.state.startMargin
     })
     event.stopPropagation();
     event.preventDefault();
@@ -76,12 +76,12 @@ class Item extends Component {
   }
 
   startDrag = (event) => {
-    /*console.log('starting drag');
+    console.log('starting drag');
     console.log('current cursor position ', event.pageX);
     console.log(this.state.allowDrag);
     console.log('original position ', this.state.relativePosition);
     console.log('original margin', this.state.startMargin);
-    console.log('duration ', this.state.duration);*/
+    console.log('duration ', this.state.duration);
 
     if (!this.state.allowDrag){
       return;
@@ -125,7 +125,7 @@ class Item extends Component {
           <div className="item-duration" style={{width: this.state.duration}}></div>
           {this.props.duration > 0 &&
             <div className="arrow"
-                 draggable="true"
+                 onMouseDown={this.initiateDrag}
                  style={{marginLeft: this.state.duration}}>
             </div>
           }
