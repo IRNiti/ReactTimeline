@@ -34,5 +34,15 @@ export default function assignLanes(items) {
     item['endIndex'] = (new Date(item.end) - minDate)/(1000*60*60*24);
     assignItemToLane(item);
   }
+
+  for (let items of lanes){
+    items.forEach((item, i) => {
+      let margin = 0;
+      if(i != 0){
+        margin = (new Date(item.start) - new Date(items[i-1].start))/(1000*60*60*24);
+      }
+      item['margin'] = margin;
+    });
+  }
   return lanes;
 }

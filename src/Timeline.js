@@ -10,18 +10,22 @@ class Timeline extends Component {
 	}
 
 	componentDidMount() {
-		let sortedLanes = assignLanes(this.props.items);
-
-		this.setState({
-			lanes: sortedLanes
-		});
+		this.orderItems();
 	}
+
+  orderItems = () => {
+    let sortedLanes = assignLanes(this.props.items);
+
+    this.setState({
+      lanes: sortedLanes
+    });
+  }
 
 	render(){
 		return(
 			<div>
 				{this.state.lanes.length > 0 && this.state.lanes.map((lane, i) => (
-					<Lane key={i} toDoItems={lane}/>
+					<Lane key={i} toDoItems={lane} reorderLanes={this.orderItems}/>
 				))}
 			</div>
 			)

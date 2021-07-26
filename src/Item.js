@@ -5,16 +5,17 @@ class Item extends Component {
   state = {
     textReadStyle: 'item-content name-content',
     textEditStyle: 'item-hide',
-    dateReadStyle: '',
-    dateEditStyle: 'item-hide',
     textValue: '',
     startDate: this.props.item.start,
     endDate: this.props.item.end,
     showDates: false,
     duration: this.props.duration,
+    originalDuration: this.props.duration,
     startMargin: this.props.item.margin,
-    relativePosition: 0,
-    allowDrag: false
+    relativePositionStart: 0,
+    relativePositionEnd: 0,
+    allowDragStart: false,
+    allowDragEnd: false
   }
 
   showDates = (isShown) => {
@@ -22,8 +23,6 @@ class Item extends Component {
       showDates: isShown
     })
   }
-
-
 
   handleEdit = (event) => {
     this.setState({
@@ -50,65 +49,109 @@ class Item extends Component {
     });
   }
 
-  initiateDrag = (event) => {
-    console.log('in initiate drag');
+  initiateDrag = (event, dragType) => {
     if (event.button !== 0){
       return;
     }
-    this.setState({
-      allowDrag: true,
-      relativePosition: event.pageX - this.state.startMargin
-    })
-    event.stopPropagation();
-    event.preventDefault();
-  }
-
-  exitDrag = (event) => {
-    this.setState({
-      allowDrag: false
-    });
-    updateProp({
-      id: this.props.item.id,
-      start: this.state.startDate
-    }, 'start');
-    event.stopPropagation();
-    event.preventDefault();
-  }
-
-  startDrag = (event) => {
-    console.log('starting drag');
-    console.log('current cursor position ', event.pageX);
-    console.log(this.state.allowDrag);
-    console.log('original position ', this.state.relativePosition);
-    console.log('original margin', this.state.startMargin);
-    console.log('duration ', this.state.duration);
-
-    if (!this.state.allowDrag){
-      return;
+    if(dragType === 'start'){
+      this.setState({
+        allowDragStart: true,
+        relativePositionStart: event.pageX - this.state.startMargin
+      })
+    } else if(dragType === 'end'){
+      this.setState({
+        allowDragEnd: true,
+        relativePositionEnd: event.pageX,
+        originalDuration: this.state.duration
+      })
     }
-    const posChange = event.pageX - this.state.relativePosition;
-    console.log('position change ', posChange);
-    let newDate = new Date(this.props.item.start);
-    console.log(newDate.getDate());
-    console.log(posChange/10);
-    const newStartDate = (new Date(newDate.setDate(newDate.getDate() + posChange/10))).toISOString().substring(0, 10);
-    this.setState({
-      startMargin: posChange,
-      duration: this.props.duration - posChange,
-      startDate: newStartDate
-    });
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  exitDrag = (event, dragType) => {
+    if(dragType === 'start'){
+      this.setState({
+        allowDragStart: false
+      });
+      updateProp({
+        id: this.props.item.id,
+        start: this.state.startDate
+      }, 'start');
+    } else if(dragType === 'end'){
+      this.setState({
+        allowDragEnd: false,
+        originalDuration: this.state.duration
+      });
+      updateProp({
+        id: this.props.item.id,
+        end: this.state.endDate
+      }, 'end');
+    }
+    this.props.orderItemsInTimeline();
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  startDragStart = (event) => {
+    this.startDrag(event, 'start');
+  }
+
+  stopDragStart = (event) => {
+    this.exitDrag(event, 'start');
+  }
+
+  startDragEnd = (event) => {
+    this.startDrag(event, 'end');
+  }
+
+  stopDragEnd = (event) => {
+    this.exitDrag(event, 'end');
+  }
+
+  startDrag = (event, dragType) => {
+    if(dragType === 'start'){
+      if (!this.state.allowDragStart){
+        return;
+      }
+      const posChange = event.pageX - this.state.relativePositionStart;
+      let newDate = new Date(this.props.item.start);
+      const newStartDate = (new Date(newDate.setDate(newDate.getDate() + posChange/10))).toISOString().substring(0, 10);
+      this.setState({
+        startMargin: posChange,
+        duration: this.props.duration - posChange,
+        startDate: newStartDate
+      });
+    } else if(dragType === 'end'){
+      if (!this.state.allowDragEnd){
+        return;
+      }
+      const posChange = event.pageX - this.state.relativePositionEnd;
+      let newDate = new Date(this.props.item.end);
+      const newEndDate = (new Date(newDate.setDate(newDate.getDate() + posChange/10))).toISOString().substring(0, 10);
+      this.setState({
+        duration: this.state.originalDuration + posChange,
+        endDate: newEndDate
+      });
+    }
     event.stopPropagation();
     event.preventDefault();
   }
 
   componentDidUpdate = () => {
-    console.log('in component did update')
-    if (this.state.allowDrag) {
-      document.addEventListener('mousemove', this.startDrag)
-      document.addEventListener('mouseup', this.exitDrag)
-    } else if (!this.state.allowDrag) {
-      document.removeEventListener('mousemove', this.startDrag)
-      document.removeEventListener('mouseup', this.exitDrag)
+    if (this.state.allowDragStart) {
+      document.addEventListener('mousemove', this.startDragStart);
+      document.addEventListener('mouseup', this.stopDragStart);
+    } else if (!this.state.allowDragStart) {
+      document.removeEventListener('mousemove', this.startDragStart);
+      document.removeEventListener('mouseup', this.stopDragStart);
+    }
+    if(this.state.allowDragEnd){
+      document.addEventListener('mousemove', this.startDragEnd);
+      document.addEventListener('mouseup', this.stopDragEnd);
+    } else if(!this.state.allowDragEnd){
+      document.removeEventListener('mousemove', this.startDragEnd);
+      document.removeEventListener('mouseup', this.stopDragEnd);
     }
   }
 
@@ -118,18 +161,16 @@ class Item extends Component {
            style={{marginLeft : this.state.startMargin}}
            onMouseEnter={() => this.showDates(true)}
            onMouseLeave={() => this.showDates(false)}>
-        <div className={this.state.dateReadStyle}>
           <div className="item-start"
-               onMouseDown={this.initiateDrag}>
+               onMouseDown={(event) => {this.initiateDrag(event, 'start')}}>
           </div>
           <div className="item-duration" style={{width: this.state.duration}}></div>
           {this.props.duration > 0 &&
             <div className="arrow"
-                 onMouseDown={this.initiateDrag}
+                 onMouseDown={(event) => {this.initiateDrag(event, 'end')}}
                  style={{marginLeft: this.state.duration}}>
             </div>
           }
-        </div>
         {this.state.showDates &&
         <div className='item-content date-content'>
           {this.state.startDate} - {this.state.endDate}

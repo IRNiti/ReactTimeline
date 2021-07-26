@@ -23,10 +23,6 @@ body {
   margin-top: -8px;
 }
 
-.lane-item::before {
-
-}
-
 .item-content {
   position: absolute;
   top: 30px;
