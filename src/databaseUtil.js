@@ -1,9 +1,9 @@
 import timelineItems from "./timelineItems";
 
-export function updateName(item) {
+export function updateProp(item, propName) {
   for(let timelineItem of timelineItems){
     if(timelineItem.id === item.id){
-      timelineItem.name = item.name;
+      timelineItem[propName] = item[propName];
     }
   }
 }

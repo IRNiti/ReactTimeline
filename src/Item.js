@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {updateName} from "./databaseUtil";
+import {updateProp} from "./databaseUtil";
 
 class Item extends Component {
   state = {
@@ -8,8 +8,8 @@ class Item extends Component {
     dateReadStyle: '',
     dateEditStyle: 'item-hide',
     textValue: '',
-    startDate: '',
-    endDate: '',
+    startDate: this.props.item.start,
+    endDate: this.props.item.end,
     showDates: false,
     duration: this.props.duration,
     startMargin: this.props.item.margin,
@@ -40,10 +40,10 @@ class Item extends Component {
   }
 
   handleSave = (event) => {
-    updateName({
+    updateProp({
       id: this.props.item.id,
       name: this.state.textValue
-    });
+    }, 'name');
     this.setState({
       textReadStyle: 'item-content name-content',
       textEditStyle: 'item-hide'
@@ -67,26 +67,36 @@ class Item extends Component {
     this.setState({
       allowDrag: false
     });
+    updateProp({
+      id: this.props.item.id,
+      start: this.state.startDate
+    }, 'start');
     event.stopPropagation();
     event.preventDefault();
   }
 
   startDrag = (event) => {
-    console.log('starting drag');
+    /*console.log('starting drag');
     console.log('current cursor position ', event.pageX);
     console.log(this.state.allowDrag);
     console.log('original position ', this.state.relativePosition);
     console.log('original margin', this.state.startMargin);
-    console.log('duration ', this.state.duration);
+    console.log('duration ', this.state.duration);*/
 
     if (!this.state.allowDrag){
       return;
     }
     const posChange = event.pageX - this.state.relativePosition;
-    this.setState(prevState => ({
+    console.log('position change ', posChange);
+    let newDate = new Date(this.props.item.start);
+    console.log(newDate.getDate());
+    console.log(posChange/10);
+    const newStartDate = (new Date(newDate.setDate(newDate.getDate() + posChange/10))).toISOString().substring(0, 10);
+    this.setState({
       startMargin: posChange,
-      duration: prevState.duration - posChange/10
-    }));
+      duration: this.props.duration - posChange,
+      startDate: newStartDate
+    });
     event.stopPropagation();
     event.preventDefault();
   }
@@ -122,7 +132,7 @@ class Item extends Component {
         </div>
         {this.state.showDates &&
         <div className='item-content date-content'>
-          {this.props.item.start} - {this.props.item.end}
+          {this.state.startDate} - {this.state.endDate}
         </div>
         }
         <div
